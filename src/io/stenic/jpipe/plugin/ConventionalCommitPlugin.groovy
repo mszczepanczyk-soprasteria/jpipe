@@ -93,13 +93,14 @@ class ConventionalCommitPlugin extends Plugin {
         script.withEnv([
             "RELEASE_BRANCHES=${this.releaseBranches}",
             "PRERELEASE_BRANCHES=${this.prereleaseBranches}",
-            "GIT_URL=${gitUrl}",
+            "GIT_URL=${gitUrl}"
         ]) {
             if (gitUrl.startsWith("http")) {
-                if (! script.env.GIT_CREDENTIALS) {
-                    script.error("Error: Missing env var GIT_CREDENTIALS, required for semantic-release auth over https!")
+                withCredentials([usernamePassword(credentialsId: "semantic-release-credential", usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    script.withEnv(["GIT_CREDENTIALS=${USERNAME}:${PASSWORD}"]) {
+                        script.sh "semantic-release ${cmdArgs}"
+                    }
                 }
-                script.sh "semantic-release ${cmdArgs}"
             } 
             else {
                 script.sshagent(credentials: [script.scm.getUserRemoteConfigs()[0].getCredentialsId()]) {
